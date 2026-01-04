@@ -121,15 +121,16 @@ class RTClient:
 
     async def add_comment(self, ticket_id: int, text: str) -> None:
         """Add a comment to an existing ticket."""
-        payload = {
-            "Content": text,
+        headers = {
+            "Authorization": f"token {self.token}",
+            "Content-Type": "text/plain",
         }
 
         try:
             async with self.session.post(
                 f"{self.base_url}/REST/2.0/ticket/{ticket_id}/comment",
-                headers=self._headers(),
-                json=payload,
+                headers=headers,
+                data=text,
             ) as response:
                 if response.status not in (200, 201):
                     raise RTAPIError(f"Comment failed: {response.status}")
