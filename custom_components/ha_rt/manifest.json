@@ -1,0 +1,13 @@
+{
+  "domain": "ha_rt",
+  "name": "Service Management",
+  "version": "1.0.0",
+  "documentation": "https://github.com/USERNAME/ha_rt",
+  "issue_tracker": "https://github.com/USERNAME/ha_rt/issues",
+  "codeowners": ["@USERNAME"],
+  "dependencies": [],
+  "requirements": [],
+  "config_flow": true,
+  "integration_type": "service",
+  "iot_class": "cloud_polling"
+}

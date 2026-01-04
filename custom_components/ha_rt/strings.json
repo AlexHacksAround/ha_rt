@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Request Tracker",
+        "description": "Enter your RT server details. See documentation for RT prerequisites.",
+        "data": {
+          "url": "RT Server URL",
+          "token": "API Token",
+          "queue": "Queue Name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to RT server. Check the URL.",
+      "invalid_auth": "Invalid API token or insufficient permissions.",
+      "invalid_url": "Invalid or unsafe URL. Only HTTPS URLs to public servers are allowed.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This RT server is already configured."
+    }
+  },
+  "services": {
+    "create_ticket": {
+      "name": "Create or update ticket",
+      "description": "Creates a new ticket or comments on existing open ticket for the device.",
+      "fields": {
+        "device_id": {
+          "name": "Device ID",
+          "description": "Unique identifier for the device/entity."
+        },
+        "subject": {
+          "name": "Subject",
+          "description": "Ticket subject line (used for new tickets)."
+        },
+        "text": {
+          "name": "Text",
+          "description": "Ticket body or comment text."
+        }
+      }
+    }
+  }
+}

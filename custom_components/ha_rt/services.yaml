@@ -1,0 +1,18 @@
+create_ticket:
+  fields:
+    device_id:
+      required: true
+      example: "sensor.water_leak_kitchen"
+      selector:
+        text:
+    subject:
+      required: true
+      example: "Water leak detected"
+      selector:
+        text:
+    text:
+      required: true
+      example: "Sensor triggered at 10:30 AM"
+      selector:
+        text:
+          multiline: true
