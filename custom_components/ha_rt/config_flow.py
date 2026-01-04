@@ -11,7 +11,7 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CONF_QUEUE, CONF_TOKEN, CONF_URL, DEFAULT_QUEUE, DOMAIN
-from .exceptions import CannotConnect, InvalidAuth
+from .exceptions import CannotConnect, InvalidAuth, RTAPIError
 from .rt_client import RTClient
 from .validators import InvalidURL, validate_rt_url
 
@@ -56,6 +56,9 @@ class HARTConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             except InvalidAuth:
                 errors["base"] = "invalid_auth"
+            except RTAPIError as err:
+                _LOGGER.warning("RT API error: %s", err)
+                errors["base"] = "api_error"
             except Exception:  # noqa: BLE001
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"

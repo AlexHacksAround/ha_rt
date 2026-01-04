@@ -15,6 +15,7 @@
       "cannot_connect": "Cannot connect to RT server. Check the URL.",
       "invalid_auth": "Invalid API token or insufficient permissions.",
       "invalid_url": "Invalid or unsafe URL. Only HTTPS URLs to public servers are allowed.",
+      "api_error": "RT API error. Ensure REST2 API is enabled and URL doesn't include /REST/2.0/",
       "unknown": "Unexpected error occurred."
     },
     "abort": {
