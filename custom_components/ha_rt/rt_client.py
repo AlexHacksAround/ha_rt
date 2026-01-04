@@ -50,7 +50,7 @@ class RTClient:
         """Test the connection to RT. Returns True if successful."""
         try:
             async with self.session.get(
-                f"{self.base_url}/REST/2.0/user",
+                f"{self.base_url}/REST/2.0/rt",
                 headers=self._headers(),
             ) as response:
                 if response.status == 401:
