@@ -1,5 +1,7 @@
 # Service Management
 
+** This is experimental, do not download it or do so at your own risk **
+
 Home Assistant integration for Request Tracker (RT) ticketing.
 
 Automatically create and manage tickets based on Home Assistant events
