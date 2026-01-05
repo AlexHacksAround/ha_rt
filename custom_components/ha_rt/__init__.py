@@ -14,7 +14,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.network import NoURLAvailableError, get_url
 
-from .const import CONF_ADDRESS, CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DOMAIN
+from .const import CONF_ADDRESS, CONF_CATALOG, CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DEFAULT_CATALOG, DOMAIN
 from .rt_client import RTClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,6 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "queue": entry.data[CONF_QUEUE],
         "ha_url": entry.data.get(CONF_HA_URL, ""),
         "address": entry.data.get(CONF_ADDRESS, ""),
+        "catalog": entry.data.get(CONF_CATALOG, DEFAULT_CATALOG),
     }
 
     async def handle_create_ticket(call: ServiceCall) -> ServiceResponse:
@@ -61,6 +62,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         base_url: str = entry_data["url"]
         configured_ha_url: str = entry_data["ha_url"]
         address: str = entry_data["address"]
+        catalog: str = entry_data["catalog"]
 
         # Look up device area
         area_name = ""
@@ -87,6 +89,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 except NoURLAvailableError:
                     _LOGGER.warning("No HA URL configured, skipping Device Information")
 
+        # Get or create asset for this device
+        asset_id = None
+        if device_id:
+            existing_asset = await rt_client.search_asset(catalog, device_id)
+            if existing_asset:
+                asset_id = existing_asset.get("id")
+                _LOGGER.debug("Found existing asset: %s", asset_id)
+            else:
+                # Create new asset using device_id as name
+                new_asset = await rt_client.create_asset(
+                    catalog, device_id, device_id, device_info_url
+                )
+                if new_asset:
+                    asset_id = new_asset.get("id")
+                    _LOGGER.debug("Created new asset: %s", asset_id)
+
         # Search for existing open ticket
         existing = await rt_client.search_tickets(queue, device_id)
 
@@ -103,6 +121,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
             ticket_id = result["id"]
             action = "created"
+            # Link ticket to asset
+            if asset_id:
+                linked = await rt_client.link_ticket_to_asset(ticket_id, asset_id)
+                if linked:
+                    _LOGGER.debug("Linked ticket %s to asset %s", ticket_id, asset_id)
 
         ticket_url = f"{base_url.rstrip('/')}/Ticket/Display.html?id={ticket_id}"
 
