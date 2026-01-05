@@ -8,7 +8,20 @@ from typing import Any
 
 from aiohttp import ClientSession, ClientError
 
-from .const import ADDRESS_FIELD, AREA_FIELD, DEVICE_ID_FIELD, DEVICE_INFO_FIELD, OPEN_STATUSES
+from .const import (
+    ADDRESS_FIELD,
+    AREA_FIELD,
+    ASSET_CONFIG_URL_FIELD,
+    ASSET_FIRMWARE_FIELD,
+    ASSET_HARDWARE_FIELD,
+    ASSET_MAC_FIELD,
+    ASSET_MANUFACTURER_FIELD,
+    ASSET_MODEL_FIELD,
+    ASSET_SERIAL_FIELD,
+    DEVICE_ID_FIELD,
+    DEVICE_INFO_FIELD,
+    OPEN_STATUSES,
+)
 from .exceptions import CannotConnect, InvalidAuth, RTAPIError
 
 _LOGGER = logging.getLogger(__name__)
@@ -114,14 +127,41 @@ class RTClient:
             return None
 
     async def create_asset(
-        self, catalog: str, name: str, device_id: str, device_info_url: str = ""
+        self,
+        catalog: str,
+        name: str,
+        device_id: str,
+        *,
+        manufacturer: str = "",
+        model: str = "",
+        serial_number: str = "",
+        sw_version: str = "",
+        hw_version: str = "",
+        config_url: str = "",
+        mac_address: str = "",
     ) -> dict[str, Any] | None:
         """Create a new asset. Returns dict with 'id' or None on failure."""
+        custom_fields: dict[str, str] = {DEVICE_ID_FIELD: device_id}
+        if manufacturer:
+            custom_fields[ASSET_MANUFACTURER_FIELD] = manufacturer
+        if model:
+            custom_fields[ASSET_MODEL_FIELD] = model
+        if serial_number:
+            custom_fields[ASSET_SERIAL_FIELD] = serial_number
+        if sw_version:
+            custom_fields[ASSET_FIRMWARE_FIELD] = sw_version
+        if hw_version:
+            custom_fields[ASSET_HARDWARE_FIELD] = hw_version
+        if config_url:
+            custom_fields[ASSET_CONFIG_URL_FIELD] = config_url
+        if mac_address:
+            custom_fields[ASSET_MAC_FIELD] = mac_address
+
         payload = {
             "Name": name,
             "Catalog": catalog,
             "Content": f"Home Assistant device: {name}",
-            "CustomFields": {DEVICE_ID_FIELD: device_id},
+            "CustomFields": custom_fields,
         }
 
         try:

@@ -32,15 +32,25 @@ Before installing this integration, configure your RT instance:
    - Create or identify the queue for tickets
    - Note the exact queue name (case-sensitive)
 
-3. **Custom Fields**
+3. **Custom Fields - Tickets**
    - Create ticket-level custom fields and apply to your queue:
    - `DeviceId` (Freeform text) - enables deduplication
    - `Device Information` (Freeform text) - stores link to HA device page
    - `Area` (Freeform text) - stores the device's area/room in Home Assistant
    - `Address` (Freeform text) - stores the Home Assistant location address
-   - `DeviceId` (Freeform text) on **Assets** - enables asset lookup by device
 
-4. **Asset Catalog**
+4. **Custom Fields - Assets**
+   - Create asset-level custom fields and apply to your catalog:
+   - `DeviceId` (Freeform text) - enables asset lookup by device
+   - `Manufacturer` (Freeform text) - device manufacturer
+   - `Model` (Freeform text) - device model
+   - `Serial Number` (Freeform text) - device serial number
+   - `Firmware Version` (Freeform text) - software/firmware version
+   - `Hardware Version` (Freeform text) - hardware version
+   - `Configuration URL` (Freeform text) - device admin URL
+   - `MAC Address` (Freeform text) - device MAC address
+
+5. **Asset Catalog**
    - Create an asset catalog for Home Assistant devices
    - Note the exact catalog name (case-sensitive)
 

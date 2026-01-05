@@ -67,12 +67,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Look up device info
         area_name = ""
         device_name = device_id  # Fallback to device_id if name not available
+        manufacturer = ""
+        model = ""
+        serial_number = ""
+        sw_version = ""
+        hw_version = ""
+        config_url = ""
+        mac_address = ""
         if device_id:
             device_registry = dr.async_get(hass)
             device = device_registry.async_get(device_id)
             if device:
                 # Use user-customized name, or default name, or device_id as fallback
                 device_name = device.name_by_user or device.name or device_id
+                manufacturer = device.manufacturer or ""
+                model = device.model or ""
+                serial_number = device.serial_number or ""
+                sw_version = device.sw_version or ""
+                hw_version = device.hw_version or ""
+                config_url = device.configuration_url or ""
+                # Extract MAC address from connections
+                for conn_type, conn_id in device.connections:
+                    if conn_type == "mac":
+                        mac_address = conn_id
+                        break
                 if device.area_id:
                     area_registry = ar.async_get(hass)
                     area = area_registry.async_get_area(device.area_id)
@@ -103,7 +121,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             else:
                 # Create new asset using device name from HA
                 new_asset = await rt_client.create_asset(
-                    catalog, device_name, device_id, device_info_url
+                    catalog,
+                    device_name,
+                    device_id,
+                    manufacturer=manufacturer,
+                    model=model,
+                    serial_number=serial_number,
+                    sw_version=sw_version,
+                    hw_version=hw_version,
+                    config_url=config_url,
+                    mac_address=mac_address,
                 )
                 if new_asset:
                     asset_id = new_asset.get("id")
