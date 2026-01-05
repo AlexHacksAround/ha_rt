@@ -38,6 +38,11 @@ Before installing this integration, configure your RT instance:
    - `Device Information` (Freeform text) - stores link to HA device page
    - `Area` (Freeform text) - stores the device's area/room in Home Assistant
    - `Address` (Freeform text) - stores the Home Assistant location address
+   - `DeviceId` (Freeform text) on **Assets** - enables asset lookup by device
+
+4. **Asset Catalog**
+   - Create an asset catalog for Home Assistant devices
+   - Note the exact catalog name (case-sensitive)
 
 ## Installation
 
@@ -67,6 +72,7 @@ Before installing this integration, configure your RT instance:
    - Queue Name
    - Home Assistant URL (optional) - for device info links
    - Address (optional) - physical location of Home Assistant
+   - Asset Catalog - RT catalog for device assets
 
 **Note:** Only HTTPS URLs to public servers are allowed for security.
 
@@ -111,6 +117,7 @@ The ticket will include:
 - "Area" field with the device's assigned area (e.g., "Kitchen", "Garage")
 - "Address" field with the configured location address
 - Location and area info is also appended to the ticket body text
+- Linked to an RT asset representing the Home Assistant device
 
 ### Response Data
 
@@ -135,6 +142,19 @@ When `ha_rt.create_ticket` is called:
 3. If not found: creates a new ticket
 
 This prevents alert storms from flapping sensors.
+
+## Asset Management
+
+When `ha_rt.create_ticket` is called:
+
+1. Searches for an existing asset with matching `device_id` in the configured catalog
+2. If not found: creates a new asset using `device_id` as the asset name
+3. Links the ticket to the asset using RT's RefersTo relationship
+
+This enables:
+- Tracking all tickets related to a specific device
+- RT's asset management reporting capabilities
+- Device lifecycle management alongside tickets
 
 ## Security
 
