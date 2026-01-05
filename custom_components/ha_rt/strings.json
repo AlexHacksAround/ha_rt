@@ -29,7 +29,7 @@
       "fields": {
         "device_id": {
           "name": "Device ID",
-          "description": "Unique identifier for the device/entity."
+          "description": "Home Assistant device registry ID. Use device_id(entity_id) in templates."
         },
         "subject": {
           "name": "Subject",

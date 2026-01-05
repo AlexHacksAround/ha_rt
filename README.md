@@ -32,11 +32,10 @@ Before installing this integration, configure your RT instance:
    - Create or identify the queue for tickets
    - Note the exact queue name (case-sensitive)
 
-3. **Custom Field**
-   - Create a ticket-level custom field named `DeviceId`
-   - Type: Freeform text
-   - Apply to your ticket queue
-   - This field enables deduplication
+3. **Custom Fields**
+   - Create ticket-level custom fields and apply to your queue:
+   - `DeviceId` (Freeform text) - enables deduplication
+   - `Device Information` (Freeform text) - stores link to HA device page
 
 ## Installation
 
@@ -75,9 +74,11 @@ Creates a new ticket or adds a comment to an existing open ticket.
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| device_id | Yes | Unique identifier (e.g., entity_id) |
+| device_id | Yes | Home Assistant device registry ID |
 | subject | Yes | Ticket subject line |
 | text | Yes | Ticket body or comment |
+
+Use the `device_id()` template function to get the registry ID from an entity:
 
 ### Example Automation
 
@@ -91,7 +92,7 @@ automation:
     action:
       - service: ha_rt.create_ticket
         data:
-          device_id: "{{ trigger.entity_id }}"
+          device_id: "{{ device_id(trigger.entity_id) }}"
           subject: "Water leak detected"
           text: "Sensor {{ trigger.entity_id }} triggered at {{ now() }}"
         response_variable: ticket
@@ -100,6 +101,8 @@ automation:
           title: "Ticket Created"
           message: "{{ ticket.ticket_url }}"
 ```
+
+The ticket will include a "Device Information" field with a direct link to the device in Home Assistant.
 
 ### Response Data
 

@@ -4,6 +4,7 @@ DOMAIN = "ha_rt"
 
 # RT API constants
 DEVICE_ID_FIELD = "DeviceId"
+DEVICE_INFO_FIELD = "Device Information"
 OPEN_STATUSES = ["new", "open", "stalled"]
 
 # Config keys

@@ -11,6 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.network import NoURLAvailableError, get_url
 
 from .const import CONF_QUEUE, CONF_TOKEN, CONF_URL, DOMAIN
 from .rt_client import RTClient
@@ -56,6 +57,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         queue: str = entry_data["queue"]
         base_url: str = entry_data["url"]
 
+        # Build device info URL
+        device_info_url = ""
+        if device_id:
+            try:
+                ha_url = get_url(hass)
+                device_info_url = f"{ha_url}/config/devices/device/{device_id}"
+            except NoURLAvailableError:
+                _LOGGER.warning("No HA URL configured, skipping Device Information")
+
         # Search for existing open ticket
         existing = await rt_client.search_tickets(queue, device_id)
 
@@ -66,7 +76,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             action = "commented"
         else:
             # Create new ticket
-            result = await rt_client.create_ticket(queue, subject, text, device_id)
+            result = await rt_client.create_ticket(
+                queue, subject, text, device_id, device_info_url
+            )
             ticket_id = result["id"]
             action = "created"
 

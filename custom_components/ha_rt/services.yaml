@@ -2,7 +2,7 @@ create_ticket:
   fields:
     device_id:
       required: true
-      example: "sensor.water_leak_kitchen"
+      example: "4e44822107eb214b9065fb0cc7148bac"
       selector:
         text:
     subject:
