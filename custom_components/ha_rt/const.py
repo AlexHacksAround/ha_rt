@@ -15,6 +15,8 @@ CONF_TOKEN = "token"
 CONF_QUEUE = "queue"
 CONF_HA_URL = "ha_url"
 CONF_ADDRESS = "address"
+CONF_CATALOG = "catalog"
 
 # Defaults
 DEFAULT_QUEUE = "Facility Management"
+DEFAULT_CATALOG = "HA Murten"
