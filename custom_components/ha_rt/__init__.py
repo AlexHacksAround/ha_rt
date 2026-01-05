@@ -136,8 +136,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     asset_id = new_asset.get("id")
                     _LOGGER.debug("Created new asset: %s", asset_id)
 
-        # Search for existing open ticket
-        existing = await rt_client.search_tickets(queue, device_id)
+        # Search for existing open ticket linked to this asset
+        existing = []
+        if asset_id:
+            existing = await rt_client.search_tickets_for_asset(queue, asset_id)
 
         if existing:
             # Add comment to first open ticket

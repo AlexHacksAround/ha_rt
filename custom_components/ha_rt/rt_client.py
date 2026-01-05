@@ -126,6 +126,33 @@ class RTClient:
             _LOGGER.warning("Asset search error: %s", err)
             return None
 
+    async def search_tickets_for_asset(
+        self, queue: str, asset_id: int
+    ) -> list[dict[str, Any]]:
+        """Search for open tickets linked to an asset."""
+        safe_queue = _escape_ticketsql(queue)
+
+        statuses = " OR ".join(f'Status="{s}"' for s in OPEN_STATUSES)
+        query = (
+            f'Queue="{safe_queue}" AND ({statuses}) '
+            f'AND RefersTo="asset:{asset_id}"'
+        )
+
+        try:
+            async with self.session.get(
+                f"{self.base_url}/REST/2.0/tickets",
+                headers=self._headers(),
+                params={"query": query},
+            ) as response:
+                if response.status != 200:
+                    _LOGGER.warning("Ticket search for asset failed: %s", response.status)
+                    return []
+                data = await response.json()
+                return data.get("items", [])
+        except ClientError as err:
+            _LOGGER.warning("Ticket search for asset error: %s", err)
+            return []
+
     async def create_asset(
         self,
         catalog: str,
