@@ -64,16 +64,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         address: str = entry_data["address"]
         catalog: str = entry_data["catalog"]
 
-        # Look up device area
+        # Look up device info
         area_name = ""
+        device_name = device_id  # Fallback to device_id if name not available
         if device_id:
             device_registry = dr.async_get(hass)
             device = device_registry.async_get(device_id)
-            if device and device.area_id:
-                area_registry = ar.async_get(hass)
-                area = area_registry.async_get_area(device.area_id)
-                if area:
-                    area_name = area.name
+            if device:
+                # Use user-customized name, or default name, or device_id as fallback
+                device_name = device.name_by_user or device.name or device_id
+                if device.area_id:
+                    area_registry = ar.async_get(hass)
+                    area = area_registry.async_get_area(device.area_id)
+                    if area:
+                        area_name = area.name
 
         # Build device info URL
         device_info_url = ""
@@ -97,9 +101,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 asset_id = existing_asset.get("id")
                 _LOGGER.debug("Found existing asset: %s", asset_id)
             else:
-                # Create new asset using device_id as name
+                # Create new asset using device name from HA
                 new_asset = await rt_client.create_asset(
-                    catalog, device_id, device_id, device_info_url
+                    catalog, device_name, device_id, device_info_url
                 )
                 if new_asset:
                     asset_id = new_asset.get("id")
