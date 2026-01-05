@@ -90,6 +90,78 @@ class RTClient:
         except ClientError as err:
             raise CannotConnect(f"Cannot connect to RT: {err}") from err
 
+    async def search_asset(self, catalog: str, device_id: str) -> dict[str, Any] | None:
+        """Search for an asset by device_id. Returns asset dict or None."""
+        safe_catalog = _escape_ticketsql(catalog)
+        safe_device_id = _escape_ticketsql(device_id)
+
+        query = f'Catalog="{safe_catalog}" AND CF.{{{DEVICE_ID_FIELD}}}="{safe_device_id}"'
+
+        try:
+            async with self.session.get(
+                f"{self.base_url}/REST/2.0/assets",
+                headers=self._headers(),
+                params={"query": query},
+            ) as response:
+                if response.status != 200:
+                    _LOGGER.warning("Asset search failed: %s", response.status)
+                    return None
+                data = await response.json()
+                items = data.get("items", [])
+                return items[0] if items else None
+        except ClientError as err:
+            _LOGGER.warning("Asset search error: %s", err)
+            return None
+
+    async def create_asset(
+        self, catalog: str, name: str, device_id: str, device_info_url: str = ""
+    ) -> dict[str, Any] | None:
+        """Create a new asset. Returns dict with 'id' or None on failure."""
+        custom_fields: dict[str, str] = {DEVICE_ID_FIELD: device_id}
+        if device_info_url:
+            custom_fields[DEVICE_INFO_FIELD] = device_info_url
+
+        payload = {
+            "Name": name,
+            "Catalog": catalog,
+            "CustomFields": custom_fields,
+        }
+
+        try:
+            async with self.session.post(
+                f"{self.base_url}/REST/2.0/asset",
+                headers=self._headers(),
+                json=payload,
+            ) as response:
+                if response.status not in (200, 201):
+                    resp_text = await response.text()
+                    _LOGGER.warning("Asset create failed: %s - %s", response.status, resp_text)
+                    return None
+                data = await response.json()
+                return {"id": data.get("id")}
+        except ClientError as err:
+            _LOGGER.warning("Asset create error: %s", err)
+            return None
+
+    async def link_ticket_to_asset(self, ticket_id: int, asset_id: int) -> bool:
+        """Link a ticket to an asset using RefersTo. Returns True on success."""
+        payload = {"RefersTo": f"asset:{asset_id}"}
+
+        try:
+            async with self.session.put(
+                f"{self.base_url}/REST/2.0/ticket/{ticket_id}",
+                headers=self._headers(),
+                json=payload,
+            ) as response:
+                if response.status not in (200, 201):
+                    resp_text = await response.text()
+                    _LOGGER.warning("Link failed: %s - %s", response.status, resp_text)
+                    return False
+                return True
+        except ClientError as err:
+            _LOGGER.warning("Link error: %s", err)
+            return False
+
     async def create_ticket(
         self,
         queue: str,
