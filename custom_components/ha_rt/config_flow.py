@@ -7,10 +7,10 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import CONF_QUEUE, CONF_TOKEN, CONF_URL, DEFAULT_QUEUE, DOMAIN
+from .const import CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DEFAULT_QUEUE, DOMAIN
 from .exceptions import CannotConnect, InvalidAuth, RTAPIError
 from .rt_client import RTClient
 from .validators import InvalidURL, validate_rt_url
@@ -22,6 +22,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_URL): str,
         vol.Required(CONF_TOKEN): str,
         vol.Required(CONF_QUEUE, default=DEFAULT_QUEUE): str,
+        vol.Optional(CONF_HA_URL, default=""): str,
     }
 )
 
@@ -30,6 +31,11 @@ class HARTConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Service Management."""
 
     VERSION = 1
+
+    @staticmethod
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        """Get the options flow for this handler."""
+        return HARTOptionsFlow(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -70,4 +76,35 @@ class HARTConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
+        )
+
+
+class HARTOptionsFlow(OptionsFlow):
+    """Handle options flow for Service Management."""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            # Update the config entry data with new ha_url
+            new_data = {**self.config_entry.data, CONF_HA_URL: user_input[CONF_HA_URL]}
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
+
+        current_ha_url = self.config_entry.data.get(CONF_HA_URL, "")
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_HA_URL, default=current_ha_url): str,
+                }
+            ),
         )

@@ -13,7 +13,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.network import NoURLAvailableError, get_url
 
-from .const import CONF_QUEUE, CONF_TOKEN, CONF_URL, DOMAIN
+from .const import CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DOMAIN
 from .rt_client import RTClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "client": client,
         "url": entry.data[CONF_URL],
         "queue": entry.data[CONF_QUEUE],
+        "ha_url": entry.data.get(CONF_HA_URL, ""),
     }
 
     async def handle_create_ticket(call: ServiceCall) -> ServiceResponse:
@@ -56,15 +57,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         rt_client: RTClient = entry_data["client"]
         queue: str = entry_data["queue"]
         base_url: str = entry_data["url"]
+        configured_ha_url: str = entry_data["ha_url"]
 
         # Build device info URL
         device_info_url = ""
         if device_id:
-            try:
-                ha_url = get_url(hass)
+            # Use configured URL if set, otherwise try to auto-detect
+            if configured_ha_url:
+                ha_url = configured_ha_url.rstrip("/")
                 device_info_url = f"{ha_url}/config/devices/device/{device_id}"
-            except NoURLAvailableError:
-                _LOGGER.warning("No HA URL configured, skipping Device Information")
+            else:
+                try:
+                    ha_url = get_url(hass)
+                    device_info_url = f"{ha_url}/config/devices/device/{device_id}"
+                except NoURLAvailableError:
+                    _LOGGER.warning("No HA URL configured, skipping Device Information")
 
         # Search for existing open ticket
         existing = await rt_client.search_tickets(queue, device_id)

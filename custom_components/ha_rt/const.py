@@ -11,6 +11,7 @@ OPEN_STATUSES = ["new", "open", "stalled"]
 CONF_URL = "url"
 CONF_TOKEN = "token"
 CONF_QUEUE = "queue"
+CONF_HA_URL = "ha_url"
 
 # Defaults
 DEFAULT_QUEUE = "Facility Management"
