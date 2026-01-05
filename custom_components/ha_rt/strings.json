@@ -9,11 +9,13 @@
           "token": "API Token",
           "queue": "Queue Name",
           "ha_url": "Home Assistant URL (optional)",
-          "address": "Address (optional)"
+          "address": "Address (optional)",
+          "catalog": "Asset Catalog"
         },
         "data_description": {
           "ha_url": "Custom URL for device links in tickets. Leave empty to auto-detect.",
-          "address": "Physical address of this Home Assistant location. Added to tickets."
+          "address": "Physical address of this Home Assistant location. Added to tickets.",
+          "catalog": "RT asset catalog name for device assets."
         }
       }
     },
@@ -34,11 +36,13 @@
         "title": "Configure Service Management",
         "data": {
           "ha_url": "Home Assistant URL",
-          "address": "Address"
+          "address": "Address",
+          "catalog": "Asset Catalog"
         },
         "data_description": {
           "ha_url": "Custom URL for device links in tickets. Leave empty to auto-detect.",
-          "address": "Physical address of this Home Assistant location. Added to tickets."
+          "address": "Physical address of this Home Assistant location. Added to tickets.",
+          "catalog": "RT asset catalog name for device assets."
         }
       }
     }
