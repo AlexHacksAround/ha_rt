@@ -36,6 +36,8 @@ Before installing this integration, configure your RT instance:
    - Create ticket-level custom fields and apply to your queue:
    - `DeviceId` (Freeform text) - enables deduplication
    - `Device Information` (Freeform text) - stores link to HA device page
+   - `Area` (Freeform text) - stores the device's area/room in Home Assistant
+   - `Address` (Freeform text) - stores the Home Assistant location address
 
 ## Installation
 
@@ -63,6 +65,8 @@ Before installing this integration, configure your RT instance:
    - RT Server URL (e.g., `https://rt.example.com`)
    - API Token
    - Queue Name
+   - Home Assistant URL (optional) - for device info links
+   - Address (optional) - physical location of Home Assistant
 
 **Note:** Only HTTPS URLs to public servers are allowed for security.
 
@@ -102,7 +106,11 @@ automation:
           message: "{{ ticket.ticket_url }}"
 ```
 
-The ticket will include a "Device Information" field with a direct link to the device in Home Assistant.
+The ticket will include:
+- "Device Information" field with a direct link to the device in Home Assistant
+- "Area" field with the device's assigned area (e.g., "Kitchen", "Garage")
+- "Address" field with the configured location address
+- Location and area info is also appended to the ticket body text
 
 ### Response Data
 

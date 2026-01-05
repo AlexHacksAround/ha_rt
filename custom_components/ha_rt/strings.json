@@ -8,10 +8,12 @@
           "url": "RT Server URL",
           "token": "API Token",
           "queue": "Queue Name",
-          "ha_url": "Home Assistant URL (optional)"
+          "ha_url": "Home Assistant URL (optional)",
+          "address": "Address (optional)"
         },
         "data_description": {
-          "ha_url": "Custom URL for device links in tickets. Leave empty to auto-detect."
+          "ha_url": "Custom URL for device links in tickets. Leave empty to auto-detect.",
+          "address": "Physical address of this Home Assistant location. Added to tickets."
         }
       }
     },
@@ -31,10 +33,12 @@
       "init": {
         "title": "Configure Service Management",
         "data": {
-          "ha_url": "Home Assistant URL"
+          "ha_url": "Home Assistant URL",
+          "address": "Address"
         },
         "data_description": {
-          "ha_url": "Custom URL for device links in tickets. Leave empty to auto-detect."
+          "ha_url": "Custom URL for device links in tickets. Leave empty to auto-detect.",
+          "address": "Physical address of this Home Assistant location. Added to tickets."
         }
       }
     }

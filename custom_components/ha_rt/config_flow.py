@@ -10,7 +10,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DEFAULT_QUEUE, DOMAIN
+from .const import CONF_ADDRESS, CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DEFAULT_QUEUE, DOMAIN
 from .exceptions import CannotConnect, InvalidAuth, RTAPIError
 from .rt_client import RTClient
 from .validators import InvalidURL, validate_rt_url
@@ -23,6 +23,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_TOKEN): str,
         vol.Required(CONF_QUEUE, default=DEFAULT_QUEUE): str,
         vol.Optional(CONF_HA_URL, default=""): str,
+        vol.Optional(CONF_ADDRESS, default=""): str,
     }
 )
 
@@ -91,20 +92,26 @@ class HARTOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
-            # Update the config entry data with new ha_url
-            new_data = {**self.config_entry.data, CONF_HA_URL: user_input[CONF_HA_URL]}
+            # Update the config entry data with new options
+            new_data = {
+                **self.config_entry.data,
+                CONF_HA_URL: user_input[CONF_HA_URL],
+                CONF_ADDRESS: user_input[CONF_ADDRESS],
+            }
             self.hass.config_entries.async_update_entry(
                 self.config_entry, data=new_data
             )
             return self.async_create_entry(title="", data={})
 
         current_ha_url = self.config_entry.data.get(CONF_HA_URL, "")
+        current_address = self.config_entry.data.get(CONF_ADDRESS, "")
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Optional(CONF_HA_URL, default=current_ha_url): str,
+                    vol.Optional(CONF_ADDRESS, default=current_address): str,
                 }
             ),
         )

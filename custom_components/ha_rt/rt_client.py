@@ -8,7 +8,7 @@ from typing import Any
 
 from aiohttp import ClientSession, ClientError
 
-from .const import DEVICE_ID_FIELD, DEVICE_INFO_FIELD, OPEN_STATUSES
+from .const import ADDRESS_FIELD, AREA_FIELD, DEVICE_ID_FIELD, DEVICE_INFO_FIELD, OPEN_STATUSES
 from .exceptions import CannotConnect, InvalidAuth, RTAPIError
 
 _LOGGER = logging.getLogger(__name__)
@@ -97,16 +97,32 @@ class RTClient:
         text: str,
         device_id: str,
         device_info_url: str = "",
+        area: str = "",
+        address: str = "",
     ) -> dict[str, Any]:
         """Create a new ticket. Returns dict with 'id'."""
         custom_fields: dict[str, str] = {DEVICE_ID_FIELD: device_id}
         if device_info_url:
             custom_fields[DEVICE_INFO_FIELD] = device_info_url
+        if area:
+            custom_fields[AREA_FIELD] = area
+        if address:
+            custom_fields[ADDRESS_FIELD] = address
+
+        # Build ticket content with location info
+        content_parts = [text]
+        if area or address:
+            content_parts.append("")  # blank line
+            if address:
+                content_parts.append(f"Location: {address}")
+            if area:
+                content_parts.append(f"Area: {area}")
+        content = "\n".join(content_parts)
 
         payload = {
             "Queue": queue,
             "Subject": subject,
-            "Content": text,
+            "Content": content,
             "CustomFields": custom_fields,
         }
 

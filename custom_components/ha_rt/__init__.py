@@ -9,11 +9,12 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
+from homeassistant.helpers import area_registry as ar, device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.network import NoURLAvailableError, get_url
 
-from .const import CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DOMAIN
+from .const import CONF_ADDRESS, CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DOMAIN
 from .rt_client import RTClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "url": entry.data[CONF_URL],
         "queue": entry.data[CONF_QUEUE],
         "ha_url": entry.data.get(CONF_HA_URL, ""),
+        "address": entry.data.get(CONF_ADDRESS, ""),
     }
 
     async def handle_create_ticket(call: ServiceCall) -> ServiceResponse:
@@ -58,6 +60,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         queue: str = entry_data["queue"]
         base_url: str = entry_data["url"]
         configured_ha_url: str = entry_data["ha_url"]
+        address: str = entry_data["address"]
+
+        # Look up device area
+        area_name = ""
+        if device_id:
+            device_registry = dr.async_get(hass)
+            device = device_registry.async_get(device_id)
+            if device and device.area_id:
+                area_registry = ar.async_get(hass)
+                area = area_registry.async_get_area(device.area_id)
+                if area:
+                    area_name = area.name
 
         # Build device info URL
         device_info_url = ""
@@ -84,7 +98,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else:
             # Create new ticket
             result = await rt_client.create_ticket(
-                queue, subject, text, device_id, device_info_url
+                queue, subject, text, device_id, device_info_url,
+                area=area_name, address=address
             )
             ticket_id = result["id"]
             action = "created"
