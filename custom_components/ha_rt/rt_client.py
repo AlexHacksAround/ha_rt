@@ -117,15 +117,11 @@ class RTClient:
         self, catalog: str, name: str, device_id: str, device_info_url: str = ""
     ) -> dict[str, Any] | None:
         """Create a new asset. Returns dict with 'id' or None on failure."""
-        custom_fields: dict[str, str] = {DEVICE_ID_FIELD: device_id}
-        if device_info_url:
-            custom_fields[DEVICE_INFO_FIELD] = device_info_url
-
         payload = {
             "Name": name,
             "Catalog": catalog,
             "Content": f"Home Assistant device: {name}",
-            "CustomFields": custom_fields,
+            "CustomFields": {DEVICE_ID_FIELD: device_id},
         }
 
         try:
