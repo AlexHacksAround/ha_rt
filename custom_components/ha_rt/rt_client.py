@@ -124,6 +124,7 @@ class RTClient:
         payload = {
             "Name": name,
             "Catalog": catalog,
+            "Content": f"Home Assistant device: {name}",
             "CustomFields": custom_fields,
         }
 
