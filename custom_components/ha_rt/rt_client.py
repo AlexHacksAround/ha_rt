@@ -127,15 +127,17 @@ class RTClient:
             return None
 
     async def search_tickets_for_asset(
-        self, queue: str, asset_id: int
+        self, queue: str, asset_id: int, subject: str
     ) -> list[dict[str, Any]]:
-        """Search for open tickets linked to an asset."""
+        """Search for open tickets linked to an asset with matching subject."""
         safe_queue = _escape_ticketsql(queue)
+        safe_subject = _escape_ticketsql(subject)
 
         statuses = " OR ".join(f'Status="{s}"' for s in OPEN_STATUSES)
         query = (
             f'Queue="{safe_queue}" AND ({statuses}) '
-            f'AND RefersTo="asset:{asset_id}"'
+            f'AND RefersTo="asset:{asset_id}" '
+            f'AND Subject="{safe_subject}"'
         )
 
         try:
