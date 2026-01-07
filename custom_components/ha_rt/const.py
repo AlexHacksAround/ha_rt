@@ -29,3 +29,6 @@ CONF_CATALOG = "catalog"
 # Defaults
 DEFAULT_QUEUE = "Facility Management"
 DEFAULT_CATALOG = "HA Murten"
+
+# Services
+SERVICE_SYNC_ASSETS = "sync_assets"

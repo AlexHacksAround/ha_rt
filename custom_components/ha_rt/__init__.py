@@ -14,6 +14,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.network import NoURLAvailableError, get_url
 
+from .asset_sync import sync_all_devices, sync_device
 from .const import CONF_ADDRESS, CONF_CATALOG, CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DEFAULT_CATALOG, DOMAIN
 from .rt_client import RTClient
 
@@ -28,6 +29,10 @@ SERVICE_SCHEMA = vol.Schema(
         vol.Required("text"): cv.string,
     }
 )
+
+SYNC_SCHEMA = vol.Schema({
+    vol.Optional("device_id"): cv.string,
+})
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -168,11 +173,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "action": action,
         }
 
+    async def handle_sync_assets(call: ServiceCall) -> ServiceResponse:
+        """Handle sync_assets service call."""
+        device_id = call.data.get("device_id")
+
+        entry_data = next(iter(hass.data[DOMAIN].values()))
+        rt_client: RTClient = entry_data["client"]
+        catalog: str = entry_data["catalog"]
+
+        if device_id:
+            success = await sync_device(hass, rt_client, catalog, device_id)
+            return {"synced": 1 if success else 0, "failed": 0 if success else 1}
+        else:
+            return await sync_all_devices(hass, rt_client, catalog)
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_CREATE_TICKET,
         handle_create_ticket,
         schema=SERVICE_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "sync_assets",
+        handle_sync_assets,
+        schema=SYNC_SCHEMA,
         supports_response=SupportsResponse.ONLY,
     )
 
@@ -185,5 +212,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if not hass.data[DOMAIN]:
         hass.services.async_remove(DOMAIN, SERVICE_CREATE_TICKET)
+        hass.services.async_remove(DOMAIN, "sync_assets")
 
     return True

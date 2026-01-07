@@ -65,6 +65,16 @@
           "description": "Ticket body or comment text."
         }
       }
+    },
+    "sync_assets": {
+      "name": "Sync assets",
+      "description": "Sync Home Assistant devices to RT assets.",
+      "fields": {
+        "device_id": {
+          "name": "Device ID",
+          "description": "Optional. Sync single device, or omit for full sync."
+        }
+      }
     }
   }
 }
