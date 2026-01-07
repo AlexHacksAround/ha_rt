@@ -1,7 +1,7 @@
 # Service Management
 
 - Created with Claude Code
-- 
+- Use at your own risk as written in the License
 
 Home Assistant integration for Request Tracker (RT) ticketing.
 
