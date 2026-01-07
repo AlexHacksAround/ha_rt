@@ -16,3 +16,11 @@ create_ticket:
       selector:
         text:
           multiline: true
+
+sync_assets:
+  fields:
+    device_id:
+      required: false
+      example: "4e44822107eb214b9065fb0cc7148bac"
+      selector:
+        text:
