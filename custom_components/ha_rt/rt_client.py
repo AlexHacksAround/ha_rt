@@ -130,8 +130,8 @@ class RTClient:
         """List all active assets in a catalog. Returns list of asset dicts."""
         safe_catalog = _escape_ticketsql(catalog)
 
-        # Only get assets that are not deleted
-        query = f'Catalog="{safe_catalog}" AND Status!="deleted"'
+        # Only get assets that are not deleted or stolen
+        query = f'Catalog="{safe_catalog}" AND Status!="deleted" AND Status!="stolen"'
 
         try:
             async with self.session.get(

@@ -167,16 +167,26 @@ async def cleanup_orphaned_assets(
     rt_client: RTClient,
     catalog: str,
 ) -> int:
-    """Find RT assets with no matching HA device and mark them deleted.
+    """Find RT assets that should not exist and mark them deleted.
+
+    An asset should be deleted if:
+    - The device no longer exists in HA
+    - The device exists but is non-physical (integration, add-on, service, etc.)
 
     Returns count of assets marked as deleted.
     """
     from .const import DEVICE_ID_FIELD
 
     device_registry = dr.async_get(hass)
-    ha_device_ids = {device.id for device in device_registry.devices.values()}
 
-    # Get all active assets from RT
+    # Build set of valid physical device IDs (entry_type is None for physical devices)
+    valid_device_ids = {
+        device.id
+        for device in device_registry.devices.values()
+        if device.entry_type is None
+    }
+
+    # Get all active assets from RT (excludes deleted and stolen)
     assets = await rt_client.list_assets(catalog)
     deleted_count = 0
 
@@ -201,12 +211,12 @@ async def cleanup_orphaned_assets(
         if not device_id:
             continue
 
-        # Check if device still exists in HA
-        if device_id not in ha_device_ids:
+        # Check if device is valid (exists and is physical)
+        if device_id not in valid_device_ids:
             success = await rt_client.update_asset(asset_id, status="deleted")
             if success:
                 _LOGGER.info(
-                    "Marked orphaned asset %s as deleted (device %s no longer exists)",
+                    "Marked asset %s as deleted (device %s is invalid or non-physical)",
                     asset_id,
                     device_id,
                 )
