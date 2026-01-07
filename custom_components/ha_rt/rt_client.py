@@ -214,6 +214,7 @@ class RTClient:
         asset_id: int,
         *,
         name: str = "",
+        status: str = "",
         manufacturer: str = "",
         model: str = "",
         serial_number: str = "",
@@ -242,6 +243,8 @@ class RTClient:
         payload: dict[str, Any] = {}
         if name:
             payload["Name"] = name
+        if status:
+            payload["Status"] = status
         if custom_fields:
             payload["CustomFields"] = custom_fields
 

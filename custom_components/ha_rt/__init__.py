@@ -16,7 +16,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.network import NoURLAvailableError, get_url
 
-from .asset_sync import sync_all_devices, sync_device
+from .asset_sync import mark_asset_deleted, sync_all_devices, sync_device
 from .const import CONF_ADDRESS, CONF_CATALOG, CONF_HA_URL, CONF_QUEUE, CONF_SYNC_INTERVAL, CONF_TOKEN, CONF_URL, DEFAULT_CATALOG, DEFAULT_SYNC_INTERVAL, DOMAIN
 from .rt_client import RTClient
 
@@ -195,8 +195,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if action in ("create", "update"):
                 await sync_device(hass, rt_client, catalog, device_id)
                 _LOGGER.debug("Synced device %s after %s event", device_id, action)
+            elif action == "remove":
+                await mark_asset_deleted(rt_client, catalog, device_id)
         except Exception as err:
-            _LOGGER.error("Failed to sync device %s: %s", device_id, err)
+            _LOGGER.error("Failed to handle device %s %s: %s", device_id, action, err)
 
     entry.async_on_unload(
         hass.bus.async_listen("device_registry_updated", handle_device_registry_event)

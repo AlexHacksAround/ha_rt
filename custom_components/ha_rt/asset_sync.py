@@ -128,3 +128,29 @@ async def sync_all_devices(
         results["skipped"],
     )
     return results
+
+
+async def mark_asset_deleted(
+    rt_client: RTClient,
+    catalog: str,
+    device_id: str,
+) -> bool:
+    """Mark an asset as deleted in RT when device is removed from HA.
+
+    Returns True if asset was found and marked deleted, False otherwise.
+    """
+    existing_asset = await rt_client.search_asset(catalog, device_id)
+
+    if not existing_asset:
+        _LOGGER.debug("No asset found for removed device %s", device_id)
+        return False
+
+    asset_id = existing_asset.get("id")
+    success = await rt_client.update_asset(asset_id, status="deleted")
+
+    if success:
+        _LOGGER.info("Marked asset %s as deleted for device %s", asset_id, device_id)
+    else:
+        _LOGGER.warning("Failed to mark asset %s as deleted", asset_id)
+
+    return success
