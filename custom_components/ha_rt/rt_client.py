@@ -209,6 +209,60 @@ class RTClient:
             _LOGGER.warning("Asset create error: %s", err)
             return None
 
+    async def update_asset(
+        self,
+        asset_id: int,
+        *,
+        name: str = "",
+        manufacturer: str = "",
+        model: str = "",
+        serial_number: str = "",
+        sw_version: str = "",
+        hw_version: str = "",
+        config_url: str = "",
+        mac_address: str = "",
+    ) -> bool:
+        """Update an existing asset. Returns True on success."""
+        custom_fields: dict[str, str] = {}
+        if manufacturer:
+            custom_fields[ASSET_MANUFACTURER_FIELD] = manufacturer
+        if model:
+            custom_fields[ASSET_MODEL_FIELD] = model
+        if serial_number:
+            custom_fields[ASSET_SERIAL_FIELD] = serial_number
+        if sw_version:
+            custom_fields[ASSET_FIRMWARE_FIELD] = sw_version
+        if hw_version:
+            custom_fields[ASSET_HARDWARE_FIELD] = hw_version
+        if config_url:
+            custom_fields[ASSET_CONFIG_URL_FIELD] = config_url
+        if mac_address:
+            custom_fields[ASSET_MAC_FIELD] = mac_address
+
+        payload: dict[str, Any] = {}
+        if name:
+            payload["Name"] = name
+        if custom_fields:
+            payload["CustomFields"] = custom_fields
+
+        if not payload:
+            return True  # Nothing to update
+
+        try:
+            async with self.session.put(
+                f"{self.base_url}/REST/2.0/asset/{asset_id}",
+                headers=self._headers(),
+                json=payload,
+            ) as response:
+                if response.status not in (200, 201):
+                    resp_text = await response.text()
+                    _LOGGER.warning("Asset update failed: %s - %s", response.status, resp_text)
+                    return False
+                return True
+        except ClientError as err:
+            _LOGGER.warning("Asset update error: %s", err)
+            return False
+
     async def link_ticket_to_asset(self, ticket_id: int, asset_id: int) -> bool:
         """Link a ticket to an asset using RefersTo. Returns True on success."""
         payload = {"RefersTo": f"asset:{asset_id}"}
