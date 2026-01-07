@@ -50,6 +50,8 @@ Before installing this integration, configure your RT instance:
    - `Hardware Version` (Freeform text) - hardware version
    - `Configuration URL` (Freeform text) - device admin URL
    - `MAC Address` (Freeform text) - device MAC address
+   - `Area` (Freeform text) - device's area/room in Home Assistant
+   - `Address` (Freeform text) - Home Assistant location address
 
 5. **Asset Catalog**
    - Create an asset catalog for Home Assistant devices
