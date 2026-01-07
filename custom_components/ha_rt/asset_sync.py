@@ -82,3 +82,31 @@ async def sync_device(
             _LOGGER.debug("Created asset %s for device %s", new_asset.get("id"), device_id)
             return True
         return False
+
+
+async def sync_all_devices(
+    hass: HomeAssistant,
+    rt_client: RTClient,
+    catalog: str,
+) -> dict[str, int]:
+    """Sync all devices to RT. Returns counts of synced/failed."""
+    results = {"synced": 0, "failed": 0}
+    device_registry = dr.async_get(hass)
+
+    for device in device_registry.devices.values():
+        try:
+            success = await sync_device(hass, rt_client, catalog, device.id)
+            if success:
+                results["synced"] += 1
+            else:
+                results["failed"] += 1
+        except Exception as err:
+            _LOGGER.error("Failed to sync device %s: %s", device.id, err)
+            results["failed"] += 1
+
+    _LOGGER.info(
+        "Asset sync complete: %d synced, %d failed",
+        results["synced"],
+        results["failed"],
+    )
+    return results
