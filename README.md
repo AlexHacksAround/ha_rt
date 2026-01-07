@@ -86,6 +86,33 @@ Before installing this integration, configure your RT instance:
 
 **Note:** Only HTTPS URLs to public servers are allowed for security.
 
+## Asset Synchronization
+
+The integration keeps RT assets in sync with Home Assistant devices:
+
+### Automatic Sync
+
+- **On device changes**: When devices are added or updated in Home Assistant
+- **Scheduled**: Full sync runs every N hours (configurable, default 6)
+
+### Manual Sync
+
+```yaml
+# Sync all devices
+action: ha_rt.sync_assets
+
+# Sync single device
+action: ha_rt.sync_assets
+data:
+  device_id: "abc123"
+```
+
+### Response
+
+```json
+{"synced": 42, "failed": 2}
+```
+
 ## Usage
 
 ### Service: ha_rt.create_ticket
@@ -155,11 +182,10 @@ This prevents alert storms from flapping sensors.
 
 ## Asset Management
 
-When `ha_rt.create_ticket` is called:
+Assets are kept in sync with Home Assistant devices via the Asset Synchronization process (see above). When `ha_rt.create_ticket` is called:
 
-1. Searches for an existing asset with matching `device_id` in the configured catalog
-2. If not found: creates a new asset using `device_id` as the asset name
-3. Links the ticket to the asset using RT's RefersTo relationship
+1. Looks up the existing asset with matching `device_id` in the configured catalog
+2. Links the ticket to the asset using RT's RefersTo relationship
 
 This enables:
 - Tracking all tickets related to a specific device
