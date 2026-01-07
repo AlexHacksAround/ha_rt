@@ -1,0 +1,27 @@
+alias: Daily Battery Check
+description: Checks all battery-powered devices and notifies if any are below 30%
+triggers:
+  - at: "09:00:00"
+    trigger: time
+actions:
+  - variables:
+      threshold: 30
+  - variables:
+      low_battery_devices: |
+        {% set ns = namespace(devices=[]) %} {% for state in states.sensor %}
+          {% if state.attributes.device_class == 'battery' 
+             and state.state not in ['unknown', 'unavailable'] 
+             and state.state | int(0) < threshold %}
+            {% set ns.devices = ns.devices + [state.name ~ ': ' ~ state.state ~ '%'] %}
+          {% endif %}
+        {% endfor %} {{ ns.devices }}
+  - variables:
+      message_content: >
+        {{ low_battery_devices | length }} device(s) below {{ threshold }}%: {%
+        for device in low_battery_devices %} {{ device }} {% endfor %}
+  - condition: template
+    value_template: "{{ low_battery_devices | length > 0 }}"
+  - data:
+      title: Le454🔋 Low Battery Alert
+      message: "{{ message_content }}"
+    action: notify.pushover
