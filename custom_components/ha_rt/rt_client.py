@@ -126,6 +126,43 @@ class RTClient:
             _LOGGER.warning("Asset search error: %s", err)
             return None
 
+    async def list_assets(self, catalog: str) -> list[dict[str, Any]]:
+        """List all active assets in a catalog. Returns list of asset dicts."""
+        safe_catalog = _escape_ticketsql(catalog)
+
+        # Only get assets that are not deleted
+        query = f'Catalog="{safe_catalog}" AND Status!="deleted"'
+
+        try:
+            async with self.session.get(
+                f"{self.base_url}/REST/2.0/assets",
+                headers=self._headers(),
+                params={"query": query},
+            ) as response:
+                if response.status != 200:
+                    _LOGGER.warning("Asset list failed: %s", response.status)
+                    return []
+                data = await response.json()
+                return data.get("items", [])
+        except ClientError as err:
+            _LOGGER.warning("Asset list error: %s", err)
+            return []
+
+    async def get_asset(self, asset_id: int) -> dict[str, Any] | None:
+        """Get asset details including custom fields. Returns asset dict or None."""
+        try:
+            async with self.session.get(
+                f"{self.base_url}/REST/2.0/asset/{asset_id}",
+                headers=self._headers(),
+            ) as response:
+                if response.status != 200:
+                    _LOGGER.warning("Asset get failed: %s", response.status)
+                    return None
+                return await response.json()
+        except ClientError as err:
+            _LOGGER.warning("Asset get error: %s", err)
+            return None
+
     async def search_tickets_for_asset(
         self, queue: str, asset_id: int, subject: str
     ) -> list[dict[str, Any]]:

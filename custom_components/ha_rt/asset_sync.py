@@ -103,9 +103,10 @@ async def sync_all_devices(
     hass: HomeAssistant,
     rt_client: RTClient,
     catalog: str,
+    cleanup: bool = True,
 ) -> dict[str, int]:
-    """Sync all devices to RT. Returns counts of synced/failed/skipped."""
-    results = {"synced": 0, "failed": 0, "skipped": 0}
+    """Sync all devices to RT. Returns counts of synced/failed/skipped/deleted."""
+    results = {"synced": 0, "failed": 0, "skipped": 0, "deleted": 0}
     device_registry = dr.async_get(hass)
 
     for device in device_registry.devices.values():
@@ -121,11 +122,16 @@ async def sync_all_devices(
             _LOGGER.error("Failed to sync device %s: %s", device.id, err)
             results["failed"] += 1
 
+    # Clean up orphaned assets (devices that no longer exist in HA)
+    if cleanup:
+        results["deleted"] = await cleanup_orphaned_assets(hass, rt_client, catalog)
+
     _LOGGER.info(
-        "Asset sync complete: %d synced, %d failed, %d skipped",
+        "Asset sync complete: %d synced, %d failed, %d skipped, %d deleted",
         results["synced"],
         results["failed"],
         results["skipped"],
+        results["deleted"],
     )
     return results
 
@@ -154,3 +160,56 @@ async def mark_asset_deleted(
         _LOGGER.warning("Failed to mark asset %s as deleted", asset_id)
 
     return success
+
+
+async def cleanup_orphaned_assets(
+    hass: HomeAssistant,
+    rt_client: RTClient,
+    catalog: str,
+) -> int:
+    """Find RT assets with no matching HA device and mark them deleted.
+
+    Returns count of assets marked as deleted.
+    """
+    from .const import DEVICE_ID_FIELD
+
+    device_registry = dr.async_get(hass)
+    ha_device_ids = {device.id for device in device_registry.devices.values()}
+
+    # Get all active assets from RT
+    assets = await rt_client.list_assets(catalog)
+    deleted_count = 0
+
+    for asset_ref in assets:
+        asset_id = asset_ref.get("id")
+        if not asset_id:
+            continue
+
+        # Get full asset details to read DeviceId custom field
+        asset = await rt_client.get_asset(asset_id)
+        if not asset:
+            continue
+
+        # Extract DeviceId from custom fields
+        custom_fields = asset.get("CustomFields", {})
+        device_id = None
+        for cf in custom_fields:
+            if cf.get("name") == DEVICE_ID_FIELD:
+                device_id = cf.get("values", [""])[0]
+                break
+
+        if not device_id:
+            continue
+
+        # Check if device still exists in HA
+        if device_id not in ha_device_ids:
+            success = await rt_client.update_asset(asset_id, status="deleted")
+            if success:
+                _LOGGER.info(
+                    "Marked orphaned asset %s as deleted (device %s no longer exists)",
+                    asset_id,
+                    device_id,
+                )
+                deleted_count += 1
+
+    return deleted_count
