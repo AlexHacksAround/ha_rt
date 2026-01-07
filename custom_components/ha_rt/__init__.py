@@ -203,6 +203,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         supports_response=SupportsResponse.ONLY,
     )
 
+    async def handle_device_registry_event(event):
+        """Handle device registry changes."""
+        action = event.data.get("action")
+        device_id = event.data.get("device_id")
+
+        if not device_id:
+            return
+
+        entry_data = next(iter(hass.data[DOMAIN].values()), None)
+        if not entry_data:
+            return
+
+        rt_client: RTClient = entry_data["client"]
+        catalog: str = entry_data["catalog"]
+
+        try:
+            if action in ("create", "update"):
+                await sync_device(hass, rt_client, catalog, device_id)
+                _LOGGER.debug("Synced device %s after %s event", device_id, action)
+        except Exception as err:
+            _LOGGER.error("Failed to sync device %s: %s", device_id, err)
+
+    entry.async_on_unload(
+        hass.bus.async_listen("device_registry_updated", handle_device_registry_event)
+    )
+
     return True
 
 
