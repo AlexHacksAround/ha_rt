@@ -19,14 +19,29 @@ async def sync_device(
     rt_client: RTClient,
     catalog: str,
     device_id: str,
-) -> bool:
-    """Sync a single device to RT. Returns True on success."""
+) -> bool | None:
+    """Sync a single device to RT.
+
+    Returns:
+        True: Success
+        False: Failed
+        None: Skipped (not a physical device)
+    """
     device_registry = dr.async_get(hass)
     device = device_registry.async_get(device_id)
 
     if not device:
         _LOGGER.warning("Device not found: %s", device_id)
         return False
+
+    # Skip non-physical devices (services, integrations, add-ons, etc.)
+    if device.entry_type is not None:
+        _LOGGER.debug(
+            "Skipping non-physical device %s (entry_type=%s)",
+            device_id,
+            device.entry_type,
+        )
+        return None
 
     # Extract device info
     device_name = device.name_by_user or device.name or device_id
@@ -89,24 +104,27 @@ async def sync_all_devices(
     rt_client: RTClient,
     catalog: str,
 ) -> dict[str, int]:
-    """Sync all devices to RT. Returns counts of synced/failed."""
-    results = {"synced": 0, "failed": 0}
+    """Sync all devices to RT. Returns counts of synced/failed/skipped."""
+    results = {"synced": 0, "failed": 0, "skipped": 0}
     device_registry = dr.async_get(hass)
 
     for device in device_registry.devices.values():
         try:
-            success = await sync_device(hass, rt_client, catalog, device.id)
-            if success:
+            result = await sync_device(hass, rt_client, catalog, device.id)
+            if result is True:
                 results["synced"] += 1
-            else:
+            elif result is False:
                 results["failed"] += 1
+            else:  # None = skipped
+                results["skipped"] += 1
         except Exception as err:
             _LOGGER.error("Failed to sync device %s: %s", device.id, err)
             results["failed"] += 1
 
     _LOGGER.info(
-        "Asset sync complete: %d synced, %d failed",
+        "Asset sync complete: %d synced, %d failed, %d skipped",
         results["synced"],
         results["failed"],
+        results["skipped"],
     )
     return results

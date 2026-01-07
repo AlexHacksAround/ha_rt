@@ -24,6 +24,7 @@ async def test_sync_device_creates_new_asset():
     mock_device.hw_version = "2.0"
     mock_device.configuration_url = None
     mock_device.connections = set()
+    mock_device.entry_type = None  # Physical device
 
     mock_registry = MagicMock()
     mock_registry.async_get.return_value = mock_device
@@ -41,6 +42,35 @@ async def test_sync_device_creates_new_asset():
     call_kwargs = mock_rt_client.create_asset.call_args
     assert call_kwargs[0][0] == "TestCatalog"
     assert call_kwargs[0][1] == "Test Device"
+
+
+@pytest.mark.asyncio
+async def test_sync_device_skips_service_devices():
+    """Test sync_device skips non-physical devices (services, integrations)."""
+    from custom_components.ha_rt.asset_sync import sync_device
+    from homeassistant.helpers.device_registry import DeviceEntryType
+
+    mock_rt_client = AsyncMock()
+
+    mock_device = MagicMock()
+    mock_device.id = "service-device-123"
+    mock_device.name = "Weather Forecast"
+    mock_device.entry_type = DeviceEntryType.SERVICE  # Service, not physical
+
+    mock_registry = MagicMock()
+    mock_registry.async_get.return_value = mock_device
+
+    mock_hass = MagicMock()
+
+    with patch(
+        "custom_components.ha_rt.asset_sync.dr.async_get",
+        return_value=mock_registry
+    ):
+        result = await sync_device(mock_hass, mock_rt_client, "TestCatalog", "service-device-123")
+
+    assert result is None  # Skipped
+    mock_rt_client.create_asset.assert_not_called()
+    mock_rt_client.update_asset.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -63,6 +93,7 @@ async def test_sync_device_updates_existing_asset():
     mock_device.hw_version = None
     mock_device.configuration_url = None
     mock_device.connections = set()
+    mock_device.entry_type = None  # Physical device
 
     mock_registry = MagicMock()
     mock_registry.async_get.return_value = mock_device
@@ -102,6 +133,7 @@ async def test_sync_all_devices():
     mock_device1.hw_version = None
     mock_device1.configuration_url = None
     mock_device1.connections = set()
+    mock_device1.entry_type = None  # Physical device
 
     mock_device2 = MagicMock()
     mock_device2.id = "device-2"
@@ -114,6 +146,7 @@ async def test_sync_all_devices():
     mock_device2.hw_version = None
     mock_device2.configuration_url = None
     mock_device2.connections = set()
+    mock_device2.entry_type = None  # Physical device
 
     mock_registry = MagicMock()
     mock_registry.devices.values.return_value = [mock_device1, mock_device2]
@@ -129,6 +162,7 @@ async def test_sync_all_devices():
 
     assert result["synced"] == 2
     assert result["failed"] == 0
+    assert result["skipped"] == 0
     assert mock_rt_client.create_asset.call_count == 2
 
 
@@ -153,6 +187,7 @@ async def test_sync_all_continues_after_failure():
     mock_device1.hw_version = None
     mock_device1.configuration_url = None
     mock_device1.connections = set()
+    mock_device1.entry_type = None  # Physical device
 
     mock_device2 = MagicMock()
     mock_device2.id = "device-2"
@@ -165,6 +200,7 @@ async def test_sync_all_continues_after_failure():
     mock_device2.hw_version = None
     mock_device2.configuration_url = None
     mock_device2.connections = set()
+    mock_device2.entry_type = None  # Physical device
 
     mock_registry = MagicMock()
     mock_registry.devices.values.return_value = [mock_device1, mock_device2]
@@ -180,4 +216,5 @@ async def test_sync_all_continues_after_failure():
 
     assert result["synced"] == 1
     assert result["failed"] == 1
+    assert result["skipped"] == 0
     assert mock_rt_client.create_asset.call_count == 2  # Both were attempted
