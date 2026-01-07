@@ -25,6 +25,7 @@ actions:
         - condition: template
           value_template: "{{ device_id is not none and device_id != '' }}"
         - action: ha_rt.create_ticket
+          response_variable: ticket_result
           data:
             device_id: "{{ device_id }}"
             subject: "Low battery: {{ repeat.item.name }}"
