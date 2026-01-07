@@ -1,6 +1,7 @@
 # Service Management
 
-** This is experimental, do not download it or do so at your own risk **
+- Created with Claude Code
+- 
 
 Home Assistant integration for Request Tracker (RT) ticketing.
 
@@ -61,7 +62,7 @@ Before installing this integration, configure your RT instance:
 1. Open HACS in Home Assistant
 2. Click "Integrations"
 3. Click the three dots menu → "Custom repositories"
-4. Add `https://github.com/USERNAME/ha_rt` as "Integration"
+4. Add `https://github.com/AlexHacksAround/ha_rt` as "Integration"
 5. Search for "Service Management" and install
 6. Restart Home Assistant
 
