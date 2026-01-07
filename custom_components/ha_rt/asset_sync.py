@@ -68,6 +68,11 @@ async def sync_device(
         if area:
             area_name = area.name
 
+    _LOGGER.debug(
+        "Syncing device %s: area=%r, address=%r",
+        device_id, area_name, address
+    )
+
     # Search for existing asset
     existing_asset = await rt_client.search_asset(catalog, device_id)
 
