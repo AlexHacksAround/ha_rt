@@ -25,10 +25,12 @@ CONF_QUEUE = "queue"
 CONF_HA_URL = "ha_url"
 CONF_ADDRESS = "address"
 CONF_CATALOG = "catalog"
+CONF_SYNC_INTERVAL = "sync_interval"
 
 # Defaults
 DEFAULT_QUEUE = "Facility Management"
 DEFAULT_CATALOG = "HA Murten"
+DEFAULT_SYNC_INTERVAL = 6  # hours
 
 # Services
 SERVICE_SYNC_ASSETS = "sync_assets"

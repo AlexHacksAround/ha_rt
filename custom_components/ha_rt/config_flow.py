@@ -10,7 +10,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import CONF_ADDRESS, CONF_CATALOG, CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DEFAULT_CATALOG, DEFAULT_QUEUE, DOMAIN
+from .const import CONF_ADDRESS, CONF_CATALOG, CONF_HA_URL, CONF_QUEUE, CONF_SYNC_INTERVAL, CONF_TOKEN, CONF_URL, DEFAULT_CATALOG, DEFAULT_QUEUE, DEFAULT_SYNC_INTERVAL, DOMAIN
 from .exceptions import CannotConnect, InvalidAuth, RTAPIError
 from .rt_client import RTClient
 from .validators import InvalidURL, validate_rt_url
@@ -25,6 +25,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_HA_URL, default=""): str,
         vol.Optional(CONF_ADDRESS, default=""): str,
         vol.Required(CONF_CATALOG, default=DEFAULT_CATALOG): str,
+        vol.Optional(CONF_SYNC_INTERVAL, default=DEFAULT_SYNC_INTERVAL): vol.All(vol.Coerce(int), vol.Range(min=1, max=24)),
     }
 )
 
@@ -95,6 +96,7 @@ class HARTOptionsFlow(OptionsFlow):
                 CONF_HA_URL: user_input[CONF_HA_URL],
                 CONF_ADDRESS: user_input[CONF_ADDRESS],
                 CONF_CATALOG: user_input[CONF_CATALOG],
+                CONF_SYNC_INTERVAL: user_input[CONF_SYNC_INTERVAL],
             }
             self.hass.config_entries.async_update_entry(
                 self.config_entry, data=new_data
@@ -104,6 +106,7 @@ class HARTOptionsFlow(OptionsFlow):
         current_ha_url = self.config_entry.data.get(CONF_HA_URL, "")
         current_address = self.config_entry.data.get(CONF_ADDRESS, "")
         current_catalog = self.config_entry.data.get(CONF_CATALOG, DEFAULT_CATALOG)
+        current_sync_interval = self.config_entry.data.get(CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL)
 
         return self.async_show_form(
             step_id="init",
@@ -112,6 +115,7 @@ class HARTOptionsFlow(OptionsFlow):
                     vol.Optional(CONF_HA_URL, default=current_ha_url): str,
                     vol.Optional(CONF_ADDRESS, default=current_address): str,
                     vol.Required(CONF_CATALOG, default=current_catalog): str,
+                    vol.Optional(CONF_SYNC_INTERVAL, default=current_sync_interval): vol.All(vol.Coerce(int), vol.Range(min=1, max=24)),
                 }
             ),
         )

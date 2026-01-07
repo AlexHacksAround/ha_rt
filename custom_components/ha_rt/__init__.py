@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 import logging
 from typing import Any
 
@@ -12,10 +13,11 @@ from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, Supp
 from homeassistant.helpers import area_registry as ar, device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.network import NoURLAvailableError, get_url
 
 from .asset_sync import sync_all_devices, sync_device
-from .const import CONF_ADDRESS, CONF_CATALOG, CONF_HA_URL, CONF_QUEUE, CONF_TOKEN, CONF_URL, DEFAULT_CATALOG, DOMAIN
+from .const import CONF_ADDRESS, CONF_CATALOG, CONF_HA_URL, CONF_QUEUE, CONF_SYNC_INTERVAL, CONF_TOKEN, CONF_URL, DEFAULT_CATALOG, DEFAULT_SYNC_INTERVAL, DOMAIN
 from .rt_client import RTClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -52,6 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "ha_url": entry.data.get(CONF_HA_URL, ""),
         "address": entry.data.get(CONF_ADDRESS, ""),
         "catalog": entry.data.get(CONF_CATALOG, DEFAULT_CATALOG),
+        "sync_interval": entry.data.get(CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL),
     }
 
     async def handle_create_ticket(call: ServiceCall) -> ServiceResponse:
@@ -227,6 +230,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     entry.async_on_unload(
         hass.bus.async_listen("device_registry_updated", handle_device_registry_event)
+    )
+
+    sync_interval = entry.data.get(CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL)
+
+    async def scheduled_sync(now):
+        """Run periodic full asset sync."""
+        entry_data = next(iter(hass.data[DOMAIN].values()), None)
+        if not entry_data:
+            return
+
+        rt_client: RTClient = entry_data["client"]
+        catalog: str = entry_data["catalog"]
+
+        _LOGGER.debug("Starting scheduled asset sync")
+        await sync_all_devices(hass, rt_client, catalog)
+
+    entry.async_on_unload(
+        async_track_time_interval(hass, scheduled_sync, timedelta(hours=sync_interval))
     )
 
     return True

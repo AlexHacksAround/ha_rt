@@ -10,12 +10,14 @@
           "queue": "Queue Name",
           "ha_url": "Home Assistant URL (optional)",
           "address": "Address (optional)",
-          "catalog": "Asset Catalog"
+          "catalog": "Asset Catalog",
+          "sync_interval": "Sync Interval (hours)"
         },
         "data_description": {
           "ha_url": "Custom URL for device links in tickets. Leave empty to auto-detect.",
           "address": "Physical address of this Home Assistant location. Added to tickets.",
-          "catalog": "RT asset catalog name for device assets."
+          "catalog": "RT asset catalog name for device assets.",
+          "sync_interval": "How often to sync all devices to RT assets (1-24 hours)."
         }
       }
     },
@@ -37,12 +39,14 @@
         "data": {
           "ha_url": "Home Assistant URL",
           "address": "Address",
-          "catalog": "Asset Catalog"
+          "catalog": "Asset Catalog",
+          "sync_interval": "Sync Interval (hours)"
         },
         "data_description": {
           "ha_url": "Custom URL for device links in tickets. Leave empty to auto-detect.",
           "address": "Physical address of this Home Assistant location. Added to tickets.",
-          "catalog": "RT asset catalog name for device assets."
+          "catalog": "RT asset catalog name for device assets.",
+          "sync_interval": "How often to sync all devices to RT assets (1-24 hours)."
         }
       }
     }
