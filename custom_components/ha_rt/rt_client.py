@@ -205,6 +205,8 @@ class RTClient:
         hw_version: str = "",
         config_url: str = "",
         mac_address: str = "",
+        area: str = "",
+        address: str = "",
     ) -> dict[str, Any] | None:
         """Create a new asset. Returns dict with 'id' or None on failure."""
         custom_fields: dict[str, str] = {DEVICE_ID_FIELD: device_id}
@@ -222,6 +224,10 @@ class RTClient:
             custom_fields[ASSET_CONFIG_URL_FIELD] = config_url
         if mac_address:
             custom_fields[ASSET_MAC_FIELD] = mac_address
+        if area:
+            custom_fields[AREA_FIELD] = area
+        if address:
+            custom_fields[ADDRESS_FIELD] = address
 
         payload = {
             "Name": name,
@@ -259,6 +265,8 @@ class RTClient:
         hw_version: str = "",
         config_url: str = "",
         mac_address: str = "",
+        area: str = "",
+        address: str = "",
     ) -> bool:
         """Update an existing asset. Returns True on success."""
         custom_fields: dict[str, str] = {}
@@ -276,6 +284,10 @@ class RTClient:
             custom_fields[ASSET_CONFIG_URL_FIELD] = config_url
         if mac_address:
             custom_fields[ASSET_MAC_FIELD] = mac_address
+        if area:
+            custom_fields[AREA_FIELD] = area
+        if address:
+            custom_fields[ADDRESS_FIELD] = address
 
         payload: dict[str, Any] = {}
         if name:

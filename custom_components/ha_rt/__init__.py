@@ -153,12 +153,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry_data = next(iter(hass.data[DOMAIN].values()))
         rt_client: RTClient = entry_data["client"]
         catalog: str = entry_data["catalog"]
+        address: str = entry_data["address"]
 
         if device_id:
-            success = await sync_device(hass, rt_client, catalog, device_id)
+            success = await sync_device(hass, rt_client, catalog, device_id, address=address)
             return {"synced": 1 if success else 0, "failed": 0 if success else 1}
         else:
-            return await sync_all_devices(hass, rt_client, catalog)
+            return await sync_all_devices(hass, rt_client, catalog, address=address)
 
     hass.services.async_register(
         DOMAIN,
@@ -190,10 +191,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         rt_client: RTClient = entry_data["client"]
         catalog: str = entry_data["catalog"]
+        address: str = entry_data["address"]
 
         try:
             if action in ("create", "update"):
-                await sync_device(hass, rt_client, catalog, device_id)
+                await sync_device(hass, rt_client, catalog, device_id, address=address)
                 _LOGGER.debug("Synced device %s after %s event", device_id, action)
             elif action == "remove":
                 await mark_asset_deleted(rt_client, catalog, device_id)
@@ -214,9 +216,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         rt_client: RTClient = entry_data["client"]
         catalog: str = entry_data["catalog"]
+        address: str = entry_data["address"]
 
         _LOGGER.debug("Starting scheduled asset sync")
-        await sync_all_devices(hass, rt_client, catalog)
+        await sync_all_devices(hass, rt_client, catalog, address=address)
 
     entry.async_on_unload(
         async_track_time_interval(hass, scheduled_sync, timedelta(hours=sync_interval))

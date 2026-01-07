@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import area_registry as ar, device_registry as dr
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -19,6 +19,7 @@ async def sync_device(
     rt_client: RTClient,
     catalog: str,
     device_id: str,
+    address: str = "",
 ) -> bool | None:
     """Sync a single device to RT.
 
@@ -59,6 +60,14 @@ async def sync_device(
             mac_address = conn_id
             break
 
+    # Look up area name
+    area_name = ""
+    if device.area_id:
+        area_registry = ar.async_get(hass)
+        area = area_registry.async_get_area(device.area_id)
+        if area:
+            area_name = area.name
+
     # Search for existing asset
     existing_asset = await rt_client.search_asset(catalog, device_id)
 
@@ -75,6 +84,8 @@ async def sync_device(
             hw_version=hw_version,
             config_url=config_url,
             mac_address=mac_address,
+            area=area_name,
+            address=address,
         )
         if success:
             _LOGGER.debug("Updated asset %s for device %s", asset_id, device_id)
@@ -92,6 +103,8 @@ async def sync_device(
             hw_version=hw_version,
             config_url=config_url,
             mac_address=mac_address,
+            area=area_name,
+            address=address,
         )
         if new_asset:
             _LOGGER.debug("Created asset %s for device %s", new_asset.get("id"), device_id)
@@ -104,6 +117,7 @@ async def sync_all_devices(
     rt_client: RTClient,
     catalog: str,
     cleanup: bool = True,
+    address: str = "",
 ) -> dict[str, int]:
     """Sync all devices to RT. Returns counts of synced/failed/skipped/deleted."""
     results = {"synced": 0, "failed": 0, "skipped": 0, "deleted": 0}
@@ -111,7 +125,7 @@ async def sync_all_devices(
 
     for device in device_registry.devices.values():
         try:
-            result = await sync_device(hass, rt_client, catalog, device.id)
+            result = await sync_device(hass, rt_client, catalog, device.id, address=address)
             if result is True:
                 results["synced"] += 1
             elif result is False:
