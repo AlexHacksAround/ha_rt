@@ -130,3 +130,54 @@ async def test_sync_all_devices():
     assert result["synced"] == 2
     assert result["failed"] == 0
     assert mock_rt_client.create_asset.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_sync_all_continues_after_failure():
+    """Test sync_all_devices continues when one device fails."""
+    from custom_components.ha_rt.asset_sync import sync_all_devices
+
+    mock_rt_client = AsyncMock()
+    # First call fails, second succeeds
+    mock_rt_client.search_asset = AsyncMock(return_value=None)
+    mock_rt_client.create_asset = AsyncMock(side_effect=[None, {"id": 123}])
+
+    mock_device1 = MagicMock()
+    mock_device1.id = "device-1"
+    mock_device1.name = "Device 1"
+    mock_device1.name_by_user = None
+    mock_device1.manufacturer = ""
+    mock_device1.model = ""
+    mock_device1.serial_number = None
+    mock_device1.sw_version = None
+    mock_device1.hw_version = None
+    mock_device1.configuration_url = None
+    mock_device1.connections = set()
+
+    mock_device2 = MagicMock()
+    mock_device2.id = "device-2"
+    mock_device2.name = "Device 2"
+    mock_device2.name_by_user = None
+    mock_device2.manufacturer = ""
+    mock_device2.model = ""
+    mock_device2.serial_number = None
+    mock_device2.sw_version = None
+    mock_device2.hw_version = None
+    mock_device2.configuration_url = None
+    mock_device2.connections = set()
+
+    mock_registry = MagicMock()
+    mock_registry.devices.values.return_value = [mock_device1, mock_device2]
+    mock_registry.async_get.side_effect = lambda did: mock_device1 if did == "device-1" else mock_device2
+
+    mock_hass = MagicMock()
+
+    with patch(
+        "custom_components.ha_rt.asset_sync.dr.async_get",
+        return_value=mock_registry
+    ):
+        result = await sync_all_devices(mock_hass, mock_rt_client, "TestCatalog")
+
+    assert result["synced"] == 1
+    assert result["failed"] == 1
+    assert mock_rt_client.create_asset.call_count == 2  # Both were attempted
