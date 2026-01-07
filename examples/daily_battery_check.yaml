@@ -21,13 +21,13 @@ actions:
       for_each: "{{ low_battery_sensors }}"
       sequence:
         - variables:
-            device_id: "{{ device_id(repeat.item.entity_id) }}"
+            dev_id: "{{ device_id(repeat.item.entity_id) }}"
         - condition: template
-          value_template: "{{ device_id is not none and device_id != '' }}"
+          value_template: "{{ dev_id is not none and dev_id != '' }}"
         - action: ha_rt.create_ticket
           response_variable: ticket_result
           data:
-            device_id: "{{ device_id }}"
+            device_id: "{{ dev_id }}"
             subject: "Low battery: {{ repeat.item.name }}"
             text: >
               Battery level for {{ repeat.item.name }} is at {{ repeat.item.level }}%,
